@@ -1,0 +1,81 @@
+// schema.prisma
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL") // e.g. postgres://user:pass@localhost:5432/twenty-sol
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+/**
+ * ---------- Enums ----------
+ */
+enum GameStatus {
+  IN_PROGRESS
+  FINISHED
+  CANCELLED
+}
+
+enum TxType {
+  MINT // tokens minted as game reward
+  SPEND // tokens the player spends (entry fee, skins, etc.)
+  WITHDRAW // bridge / cash-out to wallet
+  REFUND
+}
+
+/**
+ * ---------- Models ----------
+ */
+model User {
+  id                String             @id @default(uuid()) @db.Uuid
+  wallet            String             @unique // Solana pubkey (base58)
+  username          String?            @unique
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  gameSessions      GameSession[] // 1-to-many
+  scores            Score[]
+  tokenTransactions TokenTransaction[]
+}
+
+model GameSession {
+  id         String     @id @default(uuid()) @db.Uuid
+  userId     String? // nullable so guests can play
+  user       User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status     GameStatus @default(IN_PROGRESS)
+  moves      Int        @default(0)
+  score      Int        @default(0)
+  boardState Json? // store the final 4×4 grid for analytics / replays
+  startedAt  DateTime   @default(now())
+  endedAt    DateTime?
+  scores     Score[] // reverse lookup
+
+  @@index([userId, status])
+}
+
+model Score {
+  id            String   @id @default(uuid()) @db.Uuid
+  userId        String
+  gameSessionId String
+  value         Int
+  createdAt     DateTime @default(now())
+
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  gameSession GameSession @relation(fields: [gameSessionId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, gameSessionId]) // one score per run
+  @@index([value, createdAt])
+}
+
+model TokenTransaction {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String
+  txHash    String   @unique // on-chain signature
+  amount    Decimal  @db.Decimal(18, 8) // use Decimal to avoid FP errors
+  type      TxType
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, type])
+}

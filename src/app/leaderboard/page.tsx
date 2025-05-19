@@ -1,19 +1,31 @@
-
+// src/app/leaderboard/page.tsx
 import prisma from '@/lib/prisma';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import type { Prisma } from '@prisma/client';
+
+// Pull in exactly the fields we query
+type LeaderboardRow = Prisma.ScoreGetPayload<{
+  include: { user: { select: { username: true; wallet: true } } };
+}>;
+
+export const revalidate = 60;
 
 export default async function LeaderboardPage() {
-  const top = await prisma.score.findMany({
+  const top: LeaderboardRow[] = await prisma.score.findMany({
     orderBy: { value: 'desc' },
     take: 50,
-    include: { user: { select: { username: true, wallet: true } } }
+    include: {
+      user: { select: { username: true, wallet: true } }
+    }
   });
 
   return (
     <main className="mx-auto max-w-xl space-y-6 p-4 md:p-8">
       <Card>
         <CardHeader>
-          <CardTitle className="text-center text-2xl">Leaderboard – Top 50</CardTitle>
+          <CardTitle className="text-center text-2xl">
+            Leaderboard – Top 50
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <table className="w-full text-sm">
@@ -28,8 +40,12 @@ export default async function LeaderboardPage() {
               {top.map((row, i) => (
                 <tr key={row.id} className="border-b last:border-none">
                   <td className="py-2 pr-4">{i + 1}</td>
-                  <td className="py-2">{row.user.username ?? row.user.wallet.slice(0, 4) + '…'}</td>
-                  <td className="py-2 text-right font-medium">{row.value}</td>
+                  <td className="py-2">
+                    {row.user.username ?? `${row.user.wallet.slice(0, 4)}…`}
+                  </td>
+                  <td className="py-2 text-right font-medium">
+                    {row.value}
+                  </td>
                 </tr>
               ))}
             </tbody>

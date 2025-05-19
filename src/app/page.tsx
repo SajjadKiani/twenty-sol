@@ -5,7 +5,7 @@ import { Game2048 } from '@/components/Game2048';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { Button } from '@/components/ui/button';
 import { useEffect } from 'react';
-import { createGameSession } from '@/app/actions/createGameSession';
+import { createGameSession } from './actions/createGameSession';
 
 export default function HomePage() {
   const { connected, publicKey } = useWallet();
@@ -14,7 +14,7 @@ export default function HomePage() {
     if (connected && publicKey) {
       /* lazily create a server‑side GameSession, store id in localStorage */
       (async () => {
-        const id = await createGameSession();
+        const { id } = await createGameSession();
         localStorage.setItem('sessionId', id);
       })();
     }

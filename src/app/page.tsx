@@ -16,6 +16,8 @@ export default function HomePage() {
       (async () => {
         const { id } = await createGameSession();
         localStorage.setItem('sessionId', id);
+        console.log(id);
+        
       })();
     }
   }, [connected, publicKey]);
@@ -29,9 +31,6 @@ export default function HomePage() {
       ) : (
         <div className="flex flex-col items-center gap-4 text-muted-foreground">
           <p>Connect your Solana wallet to start playing and earning tokens!</p>
-          <Button onClick={() => { /* modal opens automatically via adapter */ }}>
-            Connect Wallet
-          </Button>
         </div>
       )}
     </main>

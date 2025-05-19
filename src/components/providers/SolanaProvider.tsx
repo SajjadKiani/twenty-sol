@@ -11,8 +11,6 @@ import {
 import { PhantomWalletAdapter } from '@solana/wallet-adapter-phantom';
 import { clusterApiUrl } from '@solana/web3.js';
 
-require('@solana/wallet-adapter-react-ui/styles.css'); // shadcn still styles nicely
-
 interface Props { children: ReactNode }
 
 export const SolanaProvider: FC<Props> = ({ children }) => {
